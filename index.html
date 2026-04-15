@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>School Report System</title>
+  <title>REB School System</title>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
     body {
       font-family: Arial;
@@ -9,16 +12,14 @@
       padding: 20px;
     }
 
-    h2 { text-align: center; }
-
-    .container {
+    .box {
       background: white;
       padding: 20px;
       border-radius: 10px;
     }
 
     input, select {
-      padding: 5px;
+      padding: 6px;
       margin: 5px;
     }
 
@@ -30,8 +31,8 @@
 
     table {
       width: 100%;
-      border-collapse: collapse;
       margin-top: 20px;
+      border-collapse: collapse;
       background: white;
     }
 
@@ -40,63 +41,83 @@
       padding: 8px;
       text-align: center;
     }
+
+    h2 {
+      text-align: center;
+    }
   </style>
 </head>
 
 <body>
 
-<h2>📚 SCHOOL REPORT SYSTEM</h2>
+<h2>🇷🇼 REB SCHOOL REPORT SYSTEM</h2>
 
-<div class="container">
+<div class="box">
 
-  Student Name: <input type="text" id="name"><br>
-  Class: <input type="text" id="class"><br>
-  Term: <input type="text" id="term"><br>
+  <!-- STUDENT INFO -->
+  Student Name:
+  <input type="text" id="name"><br>
+
+  Class:
+  <input type="text" id="class"><br>
+
+  Term:
+  <input type="text" id="term"><br>
+
+  Teacher:
+  <input type="text" id="teacher" value="Anita"><br>
 
   <hr>
 
-  <!-- SUBJECT SELECTOR -->
+  <!-- SUBJECT -->
   Subject:
   <select id="subject">
-    <option value="Kinyarwanda">Kinyarwanda</option>
-    <option value="English">English</option>
-    <option value="Mathematics">Mathematics</option>
-    <option value="Science & Tech">Science & Tech</option>
-    <option value="Social Studies">Social Studies (SST)</option>
-    <option value="Religious Education">Religious Education</option>
+    <option>Kinyarwanda</option>
+    <option>English</option>
+    <option>Mathematics</option>
+    <option>Science & Tech</option>
+    <option>Social Studies</option>
+    <option>Religious Education</option>
   </select>
 
-  Quiz (/20): <input type="number" id="quiz">
-  Test (/40): <input type="number" id="test">
-  Exam (/40): <input type="number" id="exam">
+  Quiz (/20):
+  <input type="number" id="quiz">
+
+  Test (/40):
+  <input type="number" id="test">
+
+  Exam (/40):
+  <input type="number" id="exam">
+
+  <br>
 
   <button onclick="addSubject()">Add Subject</button>
+  <button onclick="saveStudent()">Save Student</button>
+  <button onclick="downloadPDF()">Download PDF</button>
 
-  <table>
+</div>
+
+<h3>📚 Students List</h3>
+<div id="studentsList"></div>
+
+<table>
+  <thead>
     <tr>
       <th>Subject</th>
-      <th>Quiz</th>
-      <th>Test</th>
-      <th>Exam</th>
       <th>Total</th>
       <th>Grade</th>
       <th>Remark</th>
     </tr>
-    <tbody id="tbody"></tbody>
-  </table>
-
-  <button onclick="generateReport()">Generate Report</button>
-  <button onclick="downloadReport()">Download</button>
-
-</div>
-
-<div id="report"></div>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
 
 <script>
 
-let data = [];
+let currentData = [];
+let database = JSON.parse(localStorage.getItem("students")) || [];
 
-function getGrade(m){
+function grade(m){
   if(m >= 80) return "A";
   if(m >= 70) return "B";
   if(m >= 60) return "C";
@@ -104,102 +125,151 @@ function getGrade(m){
   return "E";
 }
 
-function getRemark(g){
-  if(g=="A") return "Excellent";
-  if(g=="B") return "Very Good";
-  if(g=="C") return "Good";
-  if(g=="D") return "Fair";
-  return "Weak";
+function remark(g){
+  return {
+    "A":"Excellent",
+    "B":"Very Good",
+    "C":"Good",
+    "D":"Fair",
+    "E":"Weak"
+  }[g];
 }
 
-// ADD SUBJECT
 function addSubject(){
+
   let subject = document.getElementById("subject").value;
   let q = Number(document.getElementById("quiz").value || 0);
   let t = Number(document.getElementById("test").value || 0);
   let e = Number(document.getElementById("exam").value || 0);
 
   let total = q + t + e;
-  let grade = getGrade(total);
-  let remark = getRemark(grade);
+  let g = grade(total);
+  let r = remark(g);
 
-  data.push({subject, q, t, e, total, grade, remark});
-
-  renderTable();
+  currentData.push({subject, total, g, r});
+  render();
 }
 
-// SHOW TABLE
-function renderTable(){
+function render(){
   let tbody = document.getElementById("tbody");
   tbody.innerHTML = "";
 
-  data.forEach(d=>{
+  currentData.forEach(d=>{
     tbody.innerHTML += `
       <tr>
         <td>${d.subject}</td>
-        <td>${d.q}</td>
-        <td>${d.t}</td>
-        <td>${d.e}</td>
         <td>${d.total}</td>
-        <td>${d.grade}</td>
-        <td>${d.remark}</td>
+        <td>${d.g}</td>
+        <td>${d.r}</td>
       </tr>
     `;
   });
 }
 
-// REPORT
-function generateReport(){
+function saveStudent(){
+
+  let student = {
+    name: document.getElementById("name").value,
+    cls: document.getElementById("class").value,
+    term: document.getElementById("term").value,
+    teacher: document.getElementById("teacher").value,
+    data: currentData
+  };
+
+  database.push(student);
+  localStorage.setItem("students", JSON.stringify(database));
+
+  alert("Student saved!");
+
+  currentData = [];
+  render();
+  renderStudents();
+}
+
+function renderStudents(){
+
+  let div = document.getElementById("studentsList");
+  div.innerHTML = "";
+
+  database.forEach((s,i)=>{
+    div.innerHTML += `
+      <button onclick="loadStudent(${i})">
+        ${s.name} - ${s.cls}
+      </button>
+    `;
+  });
+}
+
+function loadStudent(i){
+  let s = database[i];
+
+  document.getElementById("name").value = s.name;
+  document.getElementById("class").value = s.cls;
+  document.getElementById("term").value = s.term;
+  document.getElementById("teacher").value = s.teacher;
+
+  currentData = s.data;
+  render();
+}
+
+function downloadPDF(){
+
+  const { jsPDF } = window.jspdf;
+  let doc = new jsPDF();
+
   let name = document.getElementById("name").value;
   let cls = document.getElementById("class").value;
   let term = document.getElementById("term").value;
+  let teacher = document.getElementById("teacher").value;
 
-  let totalMarks = data.reduce((sum, d) => sum + d.total, 0);
-  let avg = (data.length ? (totalMarks / data.length).toFixed(2) : 0);
+  // 🏫 HEADER (REB STYLE)
+  doc.setFontSize(14);
+  doc.text("REPUBLIC OF RWANDA", 60, 10);
+  doc.text("MINISTRY OF EDUCATION", 65, 18);
+  doc.text("PRIMARY SCHOOL REPORT CARD", 50, 28);
 
-  let html = `
-    <h3>📄 STUDENT REPORT</h3>
-    <p><b>Name:</b> ${name}</p>
-    <p><b>Class:</b> ${cls}</p>
-    <p><b>Term:</b> ${term}</p>
+  // 👨‍🎓 INFO
+  doc.setFontSize(11);
+  doc.text("Name: " + name, 10, 40);
+  doc.text("Class: " + cls, 10, 48);
+  doc.text("Term: " + term, 10, 56);
+  doc.text("Teacher: " + teacher, 10, 64);
 
-    <p><b>Total:</b> ${totalMarks}</p>
-    <p><b>Average:</b> ${avg}%</p>
+  // 📊 TABLE
+  let y = 80;
 
-    <table border="1" width="100%">
-      <tr>
-        <th>Subject</th>
-        <th>Total</th>
-        <th>Grade</th>
-        <th>Remark</th>
-      </tr>
-  `;
+  doc.text("Subject", 10, y);
+  doc.text("Total", 70, y);
+  doc.text("Grade", 110, y);
+  doc.text("Remark", 140, y);
 
-  data.forEach(d=>{
-    html += `
-      <tr>
-        <td>${d.subject}</td>
-        <td>${d.total}</td>
-        <td>${d.grade}</td>
-        <td>${d.remark}</td>
-      </tr>
-    `;
+  y += 10;
+
+  currentData.forEach(d=>{
+    doc.text(d.subject, 10, y);
+    doc.text(String(d.total), 70, y);
+    doc.text(d.g, 110, y);
+    doc.text(d.r, 140, y);
+    y += 10;
   });
 
-  html += "</table>";
+  y += 10;
 
-  document.getElementById("report").innerHTML = html;
+  // ✍ SIGNATURES
+  doc.text("Teacher Signature: ________________", 10, y);
+  y += 10;
+  doc.text("Head Teacher Signature: ____________", 10, y);
+
+  // 🔴 STAMP
+  doc.circle(170, y - 15, 15);
+  doc.setFontSize(8);
+  doc.text("OFFICIAL STAMP", 160, y - 12);
+
+  doc.save(name + "_REB_Report.pdf");
 }
 
-// DOWNLOAD
-function downloadReport(){
-  let content = document.getElementById("report").innerHTML;
-  let blob = new Blob([content], {type: "application/msword"});
-  let a = document.createElement("a");
-  a.href = URL.createObjectURL(blob);
-  a.download = "report.doc";
-  a.click();
-}
+// INIT
+renderStudents();
 
 </script>
 
