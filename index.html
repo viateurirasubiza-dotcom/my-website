@@ -1,160 +1,207 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>My Upgraded Website</title>
+  <title>School Report System</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #f2f2f2;
+      padding: 20px;
+    }
 
-    <style>
-        body {
-            margin: 0;
-            font-family: Arial;
-            text-align: center;
-            background-color: #1e1e2f;
-            color: white;
-        }
+    h2 { text-align: center; }
 
-        .menu {
-            background-color: #111;
-            padding: 15px;
-        }
+    .container {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+    }
 
-        .menu a {
-            color: white;
-            margin: 15px;
-            text-decoration: none;
-            font-weight: bold;
-        }
+    input, select {
+      padding: 5px;
+      margin: 5px;
+    }
 
-        .menu a:hover {
-            color: #00ffcc;
-        }
+    button {
+      padding: 10px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
 
-        .section {
-            padding: 40px;
-        }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+    }
 
-        input {
-            padding: 10px;
-            margin: 5px;
-            border-radius: 5px;
-            border: none;
-        }
-
-        button {
-            padding: 10px;
-            margin: 5px;
-            background-color: #00ffcc;
-            color: black;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
-
-        button:hover {
-            background-color: #00cc99;
-        }
-    </style>
+    th, td {
+      border: 1px solid #ccc;
+      padding: 8px;
+      text-align: center;
+    }
+  </style>
 </head>
+
 <body>
 
-    <!-- MENU -->
-    <div class="menu">
-        <a href="#home">Home</a>
-        <a href="#calculator">Calculator</a>
-        <a href="#game">Game</a>
-    </div>
+<h2>📚 SCHOOL REPORT SYSTEM</h2>
 
-    <!-- HOME -->
-    <div class="section" id="home">
-        <h1>Muraho 👋</h1>
-        <p>Website yanjye yavuguruwe 🔥</p>
-    </div>
+<div class="container">
 
-    <!-- CALCULATOR -->
-    <div class="section" id="calculator">
-        <h1>Calculator 🧮</h1>
+  Student Name: <input type="text" id="name"><br>
+  Class: <input type="text" id="class"><br>
+  Term: <input type="text" id="term"><br>
 
-        <input type="number" id="num1" placeholder="Number 1">
-        <input type="number" id="num2" placeholder="Number 2">
-        <br>
+  <hr>
 
-        <button onclick="add()">+</button>
-        <button onclick="subtract()">-</button>
-        <button onclick="multiply()">*</button>
-        <button onclick="divide()">/</button>
+  <!-- SUBJECT SELECTOR -->
+  Subject:
+  <select id="subject">
+    <option value="Kinyarwanda">Kinyarwanda</option>
+    <option value="English">English</option>
+    <option value="Mathematics">Mathematics</option>
+    <option value="Science & Tech">Science & Tech</option>
+    <option value="Social Studies">Social Studies (SST)</option>
+    <option value="Religious Education">Religious Education</option>
+  </select>
 
-        <p id="result">Result: </p>
-    </div>
+  Quiz (/20): <input type="number" id="quiz">
+  Test (/40): <input type="number" id="test">
+  Exam (/40): <input type="number" id="exam">
 
-    <!-- GAME -->
-    <div class="section" id="game">
-        <h1>Guess Game 🎮</h1>
+  <button onclick="addSubject()">Add Subject</button>
 
-        <p>Hitamo number hagati ya 1 na 10</p>
+  <table>
+    <tr>
+      <th>Subject</th>
+      <th>Quiz</th>
+      <th>Test</th>
+      <th>Exam</th>
+      <th>Total</th>
+      <th>Grade</th>
+      <th>Remark</th>
+    </tr>
+    <tbody id="tbody"></tbody>
+  </table>
 
-        <input type="number" id="guess">
-        <button onclick="check()">Check</button>
+  <button onclick="generateReport()">Generate Report</button>
+  <button onclick="downloadReport()">Download</button>
 
-        <p id="message"></p>
-        <p id="chances">Chances left: 3</p>
-    </div>
+</div>
 
-    <script>
-        // CALCULATOR
-        function add() {
-            let a = Number(document.getElementById("num1").value);
-            let b = Number(document.getElementById("num2").value);
-            document.getElementById("result").innerHTML = "Result: " + (a + b);
-        }
+<div id="report"></div>
 
-        function subtract() {
-            let a = Number(document.getElementById("num1").value);
-            let b = Number(document.getElementById("num2").value);
-            document.getElementById("result").innerHTML = "Result: " + (a - b);
-        }
+<script>
 
-        function multiply() {
-            let a = Number(document.getElementById("num1").value);
-            let b = Number(document.getElementById("num2").value);
-            document.getElementById("result").innerHTML = "Result: " + (a * b);
-        }
+let data = [];
 
-        function divide() {
-            let a = Number(document.getElementById("num1").value);
-            let b = Number(document.getElementById("num2").value);
+function getGrade(m){
+  if(m >= 80) return "A";
+  if(m >= 70) return "B";
+  if(m >= 60) return "C";
+  if(m >= 50) return "D";
+  return "E";
+}
 
-            if (b == 0) {
-                document.getElementById("result").innerHTML = "Ntibishoboka kugabanya na 0!";
-            } else {
-                document.getElementById("result").innerHTML = "Result: " + (a / b);
-            }
-        }
+function getRemark(g){
+  if(g=="A") return "Excellent";
+  if(g=="B") return "Very Good";
+  if(g=="C") return "Good";
+  if(g=="D") return "Fair";
+  return "Weak";
+}
 
-        // GAME
-        let secret = Math.floor(Math.random() * 10) + 1;
-        let chances = 3;
+// ADD SUBJECT
+function addSubject(){
+  let subject = document.getElementById("subject").value;
+  let q = Number(document.getElementById("quiz").value || 0);
+  let t = Number(document.getElementById("test").value || 0);
+  let e = Number(document.getElementById("exam").value || 0);
 
-        function check() {
-            let user = document.getElementById("guess").value;
+  let total = q + t + e;
+  let grade = getGrade(total);
+  let remark = getRemark(grade);
 
-            if (chances > 0) {
-                if (user == secret) {
-                    document.getElementById("message").innerHTML = "Watsinze! 🎉";
-                    chances = 0;
-                } else {
-                    chances--;
-                    document.getElementById("message").innerHTML = "Ongera ugerageze 😅";
-                }
+  data.push({subject, q, t, e, total, grade, remark});
 
-                document.getElementById("chances").innerHTML =
-                    "Chances left: " + chances;
-            }
+  renderTable();
+}
 
-            if (chances == 0 && user != secret) {
-                document.getElementById("message").innerHTML =
-                    "Game irangiye 😢 Number yari: " + secret;
-            }
-        }
-    </script>
+// SHOW TABLE
+function renderTable(){
+  let tbody = document.getElementById("tbody");
+  tbody.innerHTML = "";
+
+  data.forEach(d=>{
+    tbody.innerHTML += `
+      <tr>
+        <td>${d.subject}</td>
+        <td>${d.q}</td>
+        <td>${d.t}</td>
+        <td>${d.e}</td>
+        <td>${d.total}</td>
+        <td>${d.grade}</td>
+        <td>${d.remark}</td>
+      </tr>
+    `;
+  });
+}
+
+// REPORT
+function generateReport(){
+  let name = document.getElementById("name").value;
+  let cls = document.getElementById("class").value;
+  let term = document.getElementById("term").value;
+
+  let totalMarks = data.reduce((sum, d) => sum + d.total, 0);
+  let avg = (data.length ? (totalMarks / data.length).toFixed(2) : 0);
+
+  let html = `
+    <h3>📄 STUDENT REPORT</h3>
+    <p><b>Name:</b> ${name}</p>
+    <p><b>Class:</b> ${cls}</p>
+    <p><b>Term:</b> ${term}</p>
+
+    <p><b>Total:</b> ${totalMarks}</p>
+    <p><b>Average:</b> ${avg}%</p>
+
+    <table border="1" width="100%">
+      <tr>
+        <th>Subject</th>
+        <th>Total</th>
+        <th>Grade</th>
+        <th>Remark</th>
+      </tr>
+  `;
+
+  data.forEach(d=>{
+    html += `
+      <tr>
+        <td>${d.subject}</td>
+        <td>${d.total}</td>
+        <td>${d.grade}</td>
+        <td>${d.remark}</td>
+      </tr>
+    `;
+  });
+
+  html += "</table>";
+
+  document.getElementById("report").innerHTML = html;
+}
+
+// DOWNLOAD
+function downloadReport(){
+  let content = document.getElementById("report").innerHTML;
+  let blob = new Blob([content], {type: "application/msword"});
+  let a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "report.doc";
+  a.click();
+}
+
+</script>
 
 </body>
 </html>
