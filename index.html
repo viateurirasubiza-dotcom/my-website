@@ -1,276 +1,290 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>REB School System</title>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
-  <style>
-    body {
-      font-family: Arial;
-      background: #f2f2f2;
-      padding: 20px;
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REB School Report System</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+    body{
+        font-family: Arial, sans-serif;
+        background:#f4f4f4;
+        padding:20px;
     }
-
-    .box {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
+    .box{
+        background:white;
+        padding:20px;
+        border-radius:10px;
+        margin-bottom:20px;
     }
-
-    input, select {
-      padding: 6px;
-      margin: 5px;
+    input, select{
+        padding:8px;
+        margin:5px;
+        width:220px;
     }
-
-    button {
-      padding: 10px;
-      margin-top: 10px;
-      cursor: pointer;
+    button{
+        padding:10px 15px;
+        margin:5px;
+        cursor:pointer;
     }
-
-    table {
-      width: 100%;
-      margin-top: 20px;
-      border-collapse: collapse;
-      background: white;
+    table{
+        width:100%;
+        border-collapse:collapse;
+        background:white;
     }
-
-    th, td {
-      border: 1px solid #ccc;
-      padding: 8px;
-      text-align: center;
+    th, td{
+        border:1px solid #ccc;
+        padding:8px;
+        text-align:center;
     }
-
-    h2 {
-      text-align: center;
+    h2{
+        text-align:center;
     }
-  </style>
+</style>
 </head>
-
 <body>
 
 <h2>🇷🇼 REB SCHOOL REPORT SYSTEM</h2>
 
 <div class="box">
+    <h3>Student Information</h3>
+    <input type="text" id="name" placeholder="Student Name"><br>
+    <input type="text" id="class" placeholder="Class (e.g P5)"><br>
+    <input type="text" id="term" placeholder="Term"><br>
+    <input type="text" id="teacher" value="Anita" placeholder="Teacher"><br>
 
-  <!-- STUDENT INFO -->
-  Student Name:
-  <input type="text" id="name"><br>
+    <h3>Add Subject Marks</h3>
+    <select id="subject">
+        <option>Kinyarwanda</option>
+        <option>English</option>
+        <option>Mathematics</option>
+        <option>Science & Tech</option>
+        <option>Social Studies</option>
+        <option>Religious Education</option>
+    </select><br>
 
-  Class:
-  <input type="text" id="class"><br>
+    <input type="number" id="quiz" placeholder="Quiz /20">
+    <input type="number" id="test" placeholder="Test /40">
+    <input type="number" id="exam" placeholder="Exam /40"><br>
 
-  Term:
-  <input type="text" id="term"><br>
-
-  Teacher:
-  <input type="text" id="teacher" value="Anita"><br>
-
-  <hr>
-
-  <!-- SUBJECT -->
-  Subject:
-  <select id="subject">
-    <option>Kinyarwanda</option>
-    <option>English</option>
-    <option>Mathematics</option>
-    <option>Science & Tech</option>
-    <option>Social Studies</option>
-    <option>Religious Education</option>
-  </select>
-
-  Quiz (/20):
-  <input type="number" id="quiz">
-
-  Test (/40):
-  <input type="number" id="test">
-
-  Exam (/40):
-  <input type="number" id="exam">
-
-  <br>
-
-  <button onclick="addSubject()">Add Subject</button>
-  <button onclick="saveStudent()">Save Student</button>
-  <button onclick="downloadPDF()">Download PDF</button>
-
+    <button onclick="addSubject()">Add Subject</button>
+    <button onclick="saveStudent()">Save Student</button>
+    <button onclick="downloadPDF()">Download PDF</button>
 </div>
 
 <h3>📚 Students List</h3>
 <div id="studentsList"></div>
 
 <table>
-  <thead>
-    <tr>
-      <th>Subject</th>
-      <th>Total</th>
-      <th>Grade</th>
-      <th>Remark</th>
-    </tr>
-  </thead>
-  <tbody id="tbody"></tbody>
+    <thead>
+        <tr>
+            <th>Subject</th>
+            <th>Quiz</th>
+            <th>Test</th>
+            <th>Exam</th>
+            <th>Total</th>
+            <th>Grade</th>
+            <th>Remark</th>
+        </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
 </table>
 
 <script>
-
 let currentData = [];
 let database = JSON.parse(localStorage.getItem("students")) || [];
 
 function grade(m){
-  if(m >= 80) return "A";
-  if(m >= 70) return "B";
-  if(m >= 60) return "C";
-  if(m >= 50) return "D";
-  return "E";
+    if(m >= 80) return "A";
+    if(m >= 70) return "B";
+    if(m >= 60) return "C";
+    if(m >= 50) return "D";
+    return "E";
 }
 
 function remark(g){
-  return {
-    "A":"Excellent",
-    "B":"Very Good",
-    "C":"Good",
-    "D":"Fair",
-    "E":"Weak"
-  }[g];
+    return {
+        "A":"Excellent",
+        "B":"Very Good",
+        "C":"Good",
+        "D":"Fair",
+        "E":"Weak"
+    }[g];
+}
+
+function suffix(rank){
+    if(rank===1) return "st";
+    if(rank===2) return "nd";
+    if(rank===3) return "rd";
+    return "th";
 }
 
 function addSubject(){
+    let subject = document.getElementById("subject").value;
+    let quiz = Number(document.getElementById("quiz").value || 0);
+    let test = Number(document.getElementById("test").value || 0);
+    let exam = Number(document.getElementById("exam").value || 0);
 
-  let subject = document.getElementById("subject").value;
-  let q = Number(document.getElementById("quiz").value || 0);
-  let t = Number(document.getElementById("test").value || 0);
-  let e = Number(document.getElementById("exam").value || 0);
+    let total = quiz + test + exam;
+    let g = grade(total);
+    let r = remark(g);
 
-  let total = q + t + e;
-  let g = grade(total);
-  let r = remark(g);
+    currentData.push({subject, quiz, test, exam, total, g, r});
+    renderTable();
 
-  currentData.push({subject, total, g, r});
-  render();
+    document.getElementById("quiz").value = "";
+    document.getElementById("test").value = "";
+    document.getElementById("exam").value = "";
 }
 
-function render(){
-  let tbody = document.getElementById("tbody");
-  tbody.innerHTML = "";
+function renderTable(){
+    let tbody = document.getElementById("tbody");
+    tbody.innerHTML = "";
 
-  currentData.forEach(d=>{
-    tbody.innerHTML += `
-      <tr>
-        <td>${d.subject}</td>
-        <td>${d.total}</td>
-        <td>${d.g}</td>
-        <td>${d.r}</td>
-      </tr>
-    `;
-  });
+    currentData.forEach(d=>{
+        tbody.innerHTML += `
+        <tr>
+            <td>${d.subject}</td>
+            <td>${d.quiz}</td>
+            <td>${d.test}</td>
+            <td>${d.exam}</td>
+            <td>${d.total}</td>
+            <td>${d.g}</td>
+            <td>${d.r}</td>
+        </tr>`;
+    });
 }
 
 function saveStudent(){
+    let total = currentData.reduce((sum,x)=>sum+x.total,0);
+    let average = currentData.length ? total/currentData.length : 0;
 
-  let student = {
-    name: document.getElementById("name").value,
-    cls: document.getElementById("class").value,
-    term: document.getElementById("term").value,
-    teacher: document.getElementById("teacher").value,
-    data: currentData
-  };
+    let student = {
+        name: document.getElementById("name").value,
+        cls: document.getElementById("class").value,
+        term: document.getElementById("term").value,
+        teacher: document.getElementById("teacher").value,
+        data: [...currentData],
+        average: average
+    };
 
-  database.push(student);
-  localStorage.setItem("students", JSON.stringify(database));
+    database.push(student);
 
-  alert("Student saved!");
+    database.sort((a,b)=>b.average-a.average);
+    database.forEach((s,i)=> s.rank = i+1);
 
-  currentData = [];
-  render();
-  renderStudents();
+    localStorage.setItem("students", JSON.stringify(database));
+
+    alert("Student saved successfully");
+
+    currentData = [];
+    renderTable();
+    renderStudents();
 }
 
 function renderStudents(){
+    let div = document.getElementById("studentsList");
+    div.innerHTML = "";
 
-  let div = document.getElementById("studentsList");
-  div.innerHTML = "";
-
-  database.forEach((s,i)=>{
-    div.innerHTML += `
-      <button onclick="loadStudent(${i})">
-        ${s.name} - ${s.cls}
-      </button>
-    `;
-  });
+    database.forEach((s,i)=>{
+        div.innerHTML += `
+        <button onclick="loadStudent(${i})">
+            ${s.rank}${suffix(s.rank)} - ${s.name} (${s.average.toFixed(1)}%)
+        </button><br>`;
+    });
 }
 
 function loadStudent(i){
-  let s = database[i];
+    let s = database[i];
 
-  document.getElementById("name").value = s.name;
-  document.getElementById("class").value = s.cls;
-  document.getElementById("term").value = s.term;
-  document.getElementById("teacher").value = s.teacher;
+    document.getElementById("name").value = s.name;
+    document.getElementById("class").value = s.cls;
+    document.getElementById("term").value = s.term;
+    document.getElementById("teacher").value = s.teacher;
 
-  currentData = s.data;
-  render();
+    currentData = [...s.data];
+    renderTable();
+}
+
+function teacherComment(avg){
+    if(avg >= 80) return "Excellent performance. Keep it up.";
+    if(avg >= 60) return "Good progress. Continue working hard.";
+    return "Needs more effort and regular practice.";
 }
 
 function downloadPDF(){
+    const { jsPDF } = window.jspdf;
+    let doc = new jsPDF();
 
-  const { jsPDF } = window.jspdf;
-  let doc = new jsPDF();
+    let name = document.getElementById("name").value;
+    let cls = document.getElementById("class").value;
+    let term = document.getElementById("term").value;
+    let teacher = document.getElementById("teacher").value;
 
-  let name = document.getElementById("name").value;
-  let cls = document.getElementById("class").value;
-  let term = document.getElementById("term").value;
-  let teacher = document.getElementById("teacher").value;
+    let totalMarks = currentData.reduce((sum,x)=>sum+x.total,0);
+    let average = currentData.length ? (totalMarks/currentData.length).toFixed(2) : "0.00";
 
-  // 🏫 HEADER (REB STYLE)
-  doc.setFontSize(14);
-  doc.text("REPUBLIC OF RWANDA", 60, 10);
-  doc.text("MINISTRY OF EDUCATION", 65, 18);
-  doc.text("PRIMARY SCHOOL REPORT CARD", 50, 28);
+    let student = database.find(x=>x.name===name);
+    let rank = student ? student.rank : "N/A";
 
-  // 👨‍🎓 INFO
-  doc.setFontSize(11);
-  doc.text("Name: " + name, 10, 40);
-  doc.text("Class: " + cls, 10, 48);
-  doc.text("Term: " + term, 10, 56);
-  doc.text("Teacher: " + teacher, 10, 64);
+    doc.setFontSize(14);
+    doc.text("REPUBLIC OF RWANDA", 65, 12);
+    doc.text("MINISTRY OF EDUCATION", 68, 20);
+    doc.text("PRIMARY SCHOOL REPORT CARD", 52, 30);
 
-  // 📊 TABLE
-  let y = 80;
+    doc.line(10,35,200,35);
 
-  doc.text("Subject", 10, y);
-  doc.text("Total", 70, y);
-  doc.text("Grade", 110, y);
-  doc.text("Remark", 140, y);
+    doc.setFontSize(11);
+    doc.text("Student Name: " + name, 10, 45);
+    doc.text("Class: " + cls, 140, 45);
+    doc.text("Term: " + term, 10, 53);
+    doc.text("Teacher: " + teacher, 140, 53);
+    doc.text("Average: " + average + "%", 10, 61);
+    doc.text("Rank: " + rank + suffix(rank), 140, 61);
 
-  y += 10;
+    let y = 75;
 
-  currentData.forEach(d=>{
-    doc.text(d.subject, 10, y);
-    doc.text(String(d.total), 70, y);
-    doc.text(d.g, 110, y);
-    doc.text(d.r, 140, y);
+    doc.rect(10,y,190,10);
+    doc.text("Subject",15,y+7);
+    doc.text("Quiz",70,y+7);
+    doc.text("Test",95,y+7);
+    doc.text("Exam",120,y+7);
+    doc.text("Total",145,y+7);
+    doc.text("Grade",165,y+7);
+    doc.text("Remark",180,y+7);
+
     y += 10;
-  });
 
-  y += 10;
+    currentData.forEach(d=>{
+        doc.rect(10,y,190,10);
+        doc.text(d.subject,15,y+7);
+        doc.text(String(d.quiz),72,y+7);
+        doc.text(String(d.test),97,y+7);
+        doc.text(String(d.exam),122,y+7);
+        doc.text(String(d.total),147,y+7);
+        doc.text(d.g,167,y+7);
+        doc.text(d.r,180,y+7);
+        y += 10;
+    });
 
-  // ✍ SIGNATURES
-  doc.text("Teacher Signature: ________________", 10, y);
-  y += 10;
-  doc.text("Head Teacher Signature: ____________", 10, y);
+    y += 10;
+    doc.text("Teacher's Comment:",10,y);
+    y += 8;
+    doc.text(teacherComment(Number(average)),15,y);
 
-  // 🔴 STAMP
-  doc.circle(170, y - 15, 15);
-  doc.setFontSize(8);
-  doc.text("OFFICIAL STAMP", 160, y - 12);
+    y += 15;
+    doc.text("Teacher Signature: __________________",10,y);
+    y += 10;
+    doc.text("Head Teacher Signature: ____________",10,y);
 
-  doc.save(name + "_REB_Report.pdf");
+    doc.circle(170,y-5,15);
+    doc.setFontSize(8);
+    doc.text("STAMP",165,y-5);
+
+    doc.save(name + "_REB_Report.pdf");
 }
 
-// INIT
 renderStudents();
-
 </script>
 
 </body>
